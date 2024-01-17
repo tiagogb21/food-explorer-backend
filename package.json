@@ -1,32 +1,47 @@
 {
-  "name": "backend",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/bcrypt": "^5.0.2",
-    "@types/node": "^20.11.5",
-    "prisma": "^5.8.1",
-    "ts-node": "^10.9.2",
-    "tsup": "^8.0.1",
-    "tsx": "^4.7.0",
-    "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "@fastify/cookie": "^9.3.0",
-    "@fastify/jwt": "^8.0.0",
-    "@prisma/client": "^5.8.1",
-    "bcrypt": "^5.1.1",
-    "fastify": "^4.25.2",
-    "http-status": "^1.7.3",
-    "vite-tsconfig-paths": "^4.3.1",
-    "vitest": "^1.2.0",
-    "zod": "^3.22.4"
-  }
+    "name": "food-explorer-backend",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start:dev": "tsx watch src/server.ts",
+        "start": "node build/server.js",
+        "test:create-prisma-environment": "npm link ./prisma/vitest-environment-prisma",
+        "test:install-prisma-environment": "npm link vitest-environment-prisma",
+        "build": "tsup src --out-dir build",
+        "lint": "eslint src --ext .ts --fix",
+        "test": "vitest run --dir src/use-cases",
+        "test:watch": "vitest --dir src/use-cases",
+        "pretest:e2e": "run-s test:create-prisma-environment test:install-prisma-environment",
+        "test:e2e": "vitest run --dir src/http",
+        "test:e2e:watch": "vitest --dir src/http",
+        "test:coverage": "vitest run --coverage",
+        "test:ui": "vitest --ui"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/bcrypt": "^5.0.2",
+        "@types/node": "^20.11.5",
+        "@types/supertest": "6.0.2",
+        "prisma": "^5.8.1",
+        "supertest": "6.3.4",
+        "ts-node": "^10.9.2",
+        "tsup": "^8.0.1",
+        "tsx": "^4.7.0",
+        "typescript": "^5.3.3"
+    },
+    "dependencies": {
+        "@fastify/cookie": "^9.3.0",
+        "@fastify/jwt": "^8.0.0",
+        "@prisma/client": "^5.8.1",
+        "bcrypt": "^5.1.1",
+        "dotenv": "16.3.1",
+        "fastify": "^4.25.2",
+        "http-status": "^1.7.3",
+        "vite-tsconfig-paths": "^4.3.1",
+        "vitest": "^1.2.0",
+        "zod": "^3.22.4"
+    }
 }
