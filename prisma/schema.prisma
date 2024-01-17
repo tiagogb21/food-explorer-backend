@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum Role {
+    User
+    Admin
+}
+
+enum PurchaseStatus {
+    Pending
+    Canceled
+    Processing
+    Delivered
+}
+
+model User {
+    id            String @id @default(uuid())
+    name          String
+    email         String @unique
+    hash_password String
+    role          Role   @default(User)
+
+    addressId String?
+
+    favorites Favorite[]
+    Purchase  Purchase[]
+    Address       Address[]
+    PaymentMethod PaymentMethod[]
+
+    createdAt     DateTime        @default(now())
+    updatedAt     DateTime        @updatedAt
+
+    @@map("users")
+}
+
+model Address {
+    id     String @id @default(uuid())
+    street String
+    number Int
+    city   String
+    state  String
+
+    user   User   @relation(fields: [userId], references: [id])
+    userId String
+
+    @@map("addresses")
+}
+
+model Category {
+    id   String @id @default(uuid())
+    name String
+
+    dishes Dish[]
+
+    @@map("categories")
+}
+
+model Dish {
+    id          String  @id @default(uuid())
+    name        String
+    price       Decimal
+    description String
+    photo       String
+
+    category   Category @relation(fields: [categoryId], references: [id])
+    categoryId String
+
+    ingredients Ingredient[]
+    favorites   Favorite[]
+    Purchase    Purchase[]
+
+    @@map("dishes")
+}
+
+model Ingredient {
+    id   String @id @default(uuid())
+    name String
+
+    dish   Dish   @relation(fields: [dishId], references: [id], onDelete: Cascade)
+    dishId String
+
+    @@map("ingredients")
+}
+
+model Favorite {
+    id String @id @default(uuid())
+
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String
+
+    dish   Dish   @relation(fields: [dishId], references: [id], onDelete: Cascade)
+    dishId String
+
+    createdAt DateTime @default(now())
+
+    @@map("favorites")
+}
+
+model Purchase {
+    id String @id @default(uuid())
+
+    quantity Int
+    status   PurchaseStatus @default(Pending)
+
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String
+
+    dish   Dish   @relation(fields: [dishId], references: [id])
+    dishId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("purchases")
+}
+
+model PaymentMethod {
+    id         String @id @default(uuid())
+    cardNumber String
+    expiration String
+    cvv        String
+    ownerName  String
+
+    user   User   @relation(fields: [userId], references: [id])
+    userId String
+
+    @@map("payment_methods")
+}
