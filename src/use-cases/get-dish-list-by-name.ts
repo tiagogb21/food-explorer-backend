@@ -11,10 +11,10 @@ interface GetDishListUseCaseResponse {
     dish: Dish;
 }
 
-export class GetDishListUseCase {
+export class GetDishListByNameUseCase {
     constructor(private dishesRepository: DishesRepository) {}
 
-    async all({
+    async execute({
         name,
     }: GetDishListUseCaseRequest): Promise<GetDishListUseCaseResponse> {
         const dish = await this.dishesRepository.findByName(name);

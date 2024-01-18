@@ -1,4 +1,3 @@
-import { hash } from 'bcrypt';
 import { Dish } from '@prisma/client';
 
 import { DishesRepository } from '@/repositories/dishes-repository';

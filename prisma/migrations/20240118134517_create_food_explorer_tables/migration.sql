@@ -11,7 +11,6 @@ CREATE TABLE "users" (
     "email" TEXT NOT NULL,
     "hash_password" TEXT NOT NULL,
     "role" "Role" NOT NULL DEFAULT 'User',
-    "addressId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -44,8 +43,8 @@ CREATE TABLE "dishes" (
     "name" TEXT NOT NULL,
     "price" DECIMAL(65,30) NOT NULL,
     "description" TEXT NOT NULL,
-    "photo" TEXT NOT NULL,
-    "categoryId" TEXT NOT NULL,
+    "photo" TEXT,
+    "categoryId" TEXT,
 
     CONSTRAINT "dishes_pkey" PRIMARY KEY ("id")
 );
@@ -97,11 +96,23 @@ CREATE TABLE "payment_methods" (
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "addresses_userId_key" ON "addresses"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "categories_name_key" ON "categories"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "dishes_name_key" ON "dishes"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ingredients_name_key" ON "ingredients"("name");
+
 -- AddForeignKey
 ALTER TABLE "addresses" ADD CONSTRAINT "addresses_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "dishes" ADD CONSTRAINT "dishes_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "dishes" ADD CONSTRAINT "dishes_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ingredients" ADD CONSTRAINT "ingredients_dishId_fkey" FOREIGN KEY ("dishId") REFERENCES "dishes"("id") ON DELETE CASCADE ON UPDATE CASCADE;

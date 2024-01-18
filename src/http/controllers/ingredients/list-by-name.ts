@@ -1,8 +1,8 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import httpStatus from 'http-status';
 
-import { makeDishesListByNameUseCase } from '@/use-cases/factories/dishes/make-dish-list-by-name-use-case';
-import { DishAlreadyExistsError } from '@/use-cases/errors/dish-already-exists-error';
+import { makeCategoriesListUseCase } from '@/use-cases/factories/categories/make-categories-list-use-case';
+import { CategoryAlreadyExistsError } from '@/use-cases/errors/category-already-exists-error';
 
 function formatId(str: string): string {
     const formattedStr = str.replace(/\b\w/g, match => match.toUpperCase());
@@ -12,20 +12,20 @@ function formatId(str: string): string {
 export async function listByName(request: FastifyRequest, reply: FastifyReply) {
     const { id } = request.params as { id: string };
 
-    const dishIdFormatted = formatId(id);
+    const categoriIdFormatted = formatId(id);
 
-    let dish;
+    let category;
 
     try {
-        const getDishesList = makeDishesListByNameUseCase();
+        const getCategoriesList = makeCategoriesListUseCase();
 
-        const { dish: dishData } = await getDishesList.execute({
-            name: dishIdFormatted,
+        const { category: categoryData } = await getCategoriesList.execute({
+            name: categoriIdFormatted,
         });
 
-        dish = dishData;
+        category = categoryData;
     } catch (error) {
-        if (error instanceof DishAlreadyExistsError) {
+        if (error instanceof CategoryAlreadyExistsError) {
             return reply.status(httpStatus.CONFLICT)
                 .send({ message: error.message });
         }
@@ -34,6 +34,6 @@ export async function listByName(request: FastifyRequest, reply: FastifyReply) {
     }
 
     return reply.status(httpStatus.OK).send({
-        dish,
+        category,
     });
 }

@@ -20,8 +20,6 @@ describe('List (e2e)', () => {
             .get('/dishes')
             .set('Authorization', `Bearer ${token}`)
             .send();
-        
-        console.log(dishListResponse);
 
         expect(dishListResponse.statusCode).toEqual(httpStatus.OK);
     });

@@ -1,4 +1,4 @@
-import { Prisma, Dish, Address } from '@prisma/client';
+import { Prisma, Dish } from '@prisma/client';
 
 export interface DishesRepository {
     findAll(): Promise<Dish[]>;

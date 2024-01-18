@@ -23,10 +23,15 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 
 // src/app.ts
-var import_jwt = __toESM(require("@fastify/jwt"));
-var import_cookie = __toESM(require("@fastify/cookie"));
-var import_fastify = __toESM(require("fastify"));
 var import_zod5 = require("zod");
+var import_http_status9 = __toESM(require("http-status"));
+var import_jwt = __toESM(require("@fastify/jwt"));
+var import_helmet = __toESM(require("@fastify/helmet"));
+var import_cookie = __toESM(require("@fastify/cookie"));
+var import_swagger = __toESM(require("@fastify/swagger"));
+var import_swagger_ui = __toESM(require("@fastify/swagger-ui"));
+var import_under_pressure = __toESM(require("@fastify/under-pressure"));
+var import_fastify = __toESM(require("fastify"));
 
 // src/env/index.ts
 var import_config = require("dotenv/config");
@@ -270,7 +275,6 @@ var RegisterUseCase = class {
   }) {
     const passwordHash = await (0, import_bcrypt2.hash)(password, 6);
     const userWithSameEmail = await this.usersRepository.findByEmail(email);
-    console.log(userWithSameEmail);
     if (userWithSameEmail) {
       throw new UserAlreadyExistsError();
     }
@@ -418,41 +422,30 @@ var PrismaDishesRepository = class {
   }
 };
 
-// src/use-cases/get-all-dishes-list.ts
-var GetDishListUseCase = class {
+// src/use-cases/get-dish-list-by-name.ts
+var GetDishListByNameUseCase = class {
   constructor(dishesRepository) {
     this.dishesRepository = dishesRepository;
   }
-  async all() {
-    const dishes = await this.dishesRepository.findAll();
+  async execute({
+    name
+  }) {
+    const dish = await this.dishesRepository.findByName(name);
+    if (!dish) {
+      throw new ResourceNotFoundError();
+    }
     return {
-      dishes
+      dish
     };
   }
 };
 
-// src/use-cases/factories/dishes/make-dishes-list-use-case.ts
-function makeDishesListUseCase() {
+// src/use-cases/factories/dishes/make-dish-list-by-name-use-case.ts
+function makeDishesListByNameUseCase() {
   const dishesRepository = new PrismaDishesRepository();
-  const useCase = new GetDishListUseCase(dishesRepository);
+  const useCase = new GetDishListByNameUseCase(dishesRepository);
   return useCase;
 }
-
-// src/http/controllers/dishes/list-by-name.ts
-async function listByName(request, reply) {
-  const getDishesList = makeDishesListUseCase();
-  const { dish } = await getDishesList.execute({
-    dishId: request.id
-  });
-  return reply.status(import_http_status6.default.OK).send({
-    dish: {
-      ...dish
-    }
-  });
-}
-
-// src/http/controllers/dishes/create-dish-list.ts
-var import_http_status7 = __toESM(require("http-status"));
 
 // src/use-cases/errors/dish-already-exists-error.ts
 var DishAlreadyExistsError = class extends Error {
@@ -460,6 +453,35 @@ var DishAlreadyExistsError = class extends Error {
     super("Dish already exists.");
   }
 };
+
+// src/http/controllers/dishes/list-by-name.ts
+function formatId(str) {
+  const formattedStr = str.replace(/\b\w/g, (match) => match.toUpperCase());
+  return formattedStr.replace(/-/g, " ");
+}
+async function listByName(request, reply) {
+  const { id } = request.params;
+  const dishIdFormatted = formatId(id);
+  let dish;
+  try {
+    const getDishesList = makeDishesListByNameUseCase();
+    const { dish: dishData } = await getDishesList.execute({
+      name: dishIdFormatted
+    });
+    dish = dishData;
+  } catch (error) {
+    if (error instanceof DishAlreadyExistsError) {
+      return reply.status(import_http_status6.default.CONFLICT).send({ message: error.message });
+    }
+    throw error;
+  }
+  return reply.status(import_http_status6.default.OK).send({
+    dish
+  });
+}
+
+// src/http/controllers/dishes/create-dish.ts
+var import_http_status7 = __toESM(require("http-status"));
 
 // src/use-cases/create-dish.ts
 var CreateDishUseCase = class {
@@ -504,7 +526,7 @@ var createDishBodySchema = import_zod4.z.object({
   photo: import_zod4.z.string().optional()
 });
 
-// src/http/controllers/dishes/create-dish-list.ts
+// src/http/controllers/dishes/create-dish.ts
 async function createDish(request, reply) {
   const {
     name,
@@ -528,15 +550,35 @@ async function createDish(request, reply) {
     }
     throw error;
   }
-  return reply.status(import_http_status7.default.OK).send();
+  return reply.status(import_http_status7.default.CREATED).send();
 }
 
 // src/http/controllers/dishes/all-dishes.ts
 var import_http_status8 = __toESM(require("http-status"));
+
+// src/use-cases/get-all-dishes-list.ts
+var GetDishListUseCase = class {
+  constructor(dishesRepository) {
+    this.dishesRepository = dishesRepository;
+  }
+  async all() {
+    const dishes = await this.dishesRepository.findAll();
+    return {
+      dishes
+    };
+  }
+};
+
+// src/use-cases/factories/dishes/make-dishes-list-use-case.ts
+function makeDishesListUseCase() {
+  const dishesRepository = new PrismaDishesRepository();
+  const useCase = new GetDishListUseCase(dishesRepository);
+  return useCase;
+}
+
+// src/http/controllers/dishes/all-dishes.ts
 async function allDishes(request, reply) {
-  console.log(123);
   const getDishesList = makeDishesListUseCase();
-  console.log(getDishesList);
   const { dishes } = await getDishesList.all();
   return reply.status(import_http_status8.default.OK).send({
     dish: {
@@ -545,16 +587,221 @@ async function allDishes(request, reply) {
   });
 }
 
+// src/lib/swagger/dishes/index.ts
+var getAllOptionsDishRoutes = {
+  title: "Get All Dishes",
+  description: "List all dishes, paginated using a cursor paginator.",
+  tags: ["dishes"],
+  version: "0.1.0",
+  produces: ["application/json"],
+  querystring: {
+    type: "object",
+    properties: {
+      page: { type: "integer", default: 1, description: "Page number" },
+      limit: { type: "integer", default: 10, description: "Items per page" },
+      sortBy: { type: "string", enum: ["name", "price"], description: "Sort by field" },
+      sortOrder: { type: "string", enum: ["asc", "desc"], description: "Sort order" },
+      search: { type: "string", description: "Search term" }
+    }
+  },
+  response: {
+    200: {
+      type: "object",
+      properties: {
+        results: {
+          type: "array",
+          // Indica que 'results' é um array
+          items: {
+            type: "object",
+            // Cada elemento do array é um objeto
+            properties: {
+              id: {
+                type: "string",
+                format: "uuid"
+              },
+              name: {
+                type: "string"
+              },
+              description: {
+                type: "string"
+              },
+              price: {
+                type: "string"
+              },
+              photo: {
+                type: "string"
+              },
+              category: {
+                type: "object",
+                properties: {
+                  id: {
+                    type: "number"
+                  }
+                }
+              },
+              ingredients: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: {
+                      type: "number"
+                    }
+                  }
+                }
+              },
+              tags: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: {
+                      type: "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      pagination: {
+        type: "object",
+        properties: {
+          totalItems: { type: "integer", description: "Total number of items" },
+          currentPage: { type: "integer", description: "Current page" },
+          totalPages: { type: "integer", description: "Total number of pages" },
+          nextPage: { type: "integer", description: "Next page number" },
+          prevPage: { type: "integer", description: "Previous page number" }
+        }
+      }
+    }
+  }
+};
+var postOptionsDishRoutes = {
+  description: "This route creates a new dish",
+  tags: ["dishes"],
+  body: {
+    type: "object",
+    properties: {
+      name: {
+        type: "string"
+      },
+      description: {
+        type: "string"
+      },
+      price: {
+        type: "string"
+      },
+      photo: {
+        type: "string"
+      }
+    }
+  },
+  response: {
+    201: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          format: "uuid"
+        },
+        name: {
+          type: "string"
+        },
+        description: {
+          type: "string"
+        },
+        price: {
+          type: "string"
+        },
+        photo: {
+          type: "string"
+        }
+      }
+    }
+  }
+};
+
 // src/http/routes/dishes/dish.route.ts
 async function dishesRoutes(app2) {
-  app2.get("/dishes", { onRequest: [verifyJwt] }, allDishes);
-  app2.get("/dish/{id}", { onRequest: [verifyJwt] }, listByName);
-  app2.post("/create-dish", { onRequest: [verifyJwt] }, createDish);
+  app2.get(
+    "/dishes",
+    {
+      schema: getAllOptionsDishRoutes
+    },
+    allDishes
+  );
+  app2.get(
+    "/dish/:id",
+    // {
+    //     schema: getOneOptionsDishRoutes,
+    // },
+    listByName
+  );
+  app2.post(
+    "/create-dish",
+    {
+      onRequest: [verifyJwt],
+      schema: postOptionsDishRoutes
+    },
+    createDish
+  );
 }
 
+// src/config/swagger.config.ts
+var tagsOptions = (option) => ({
+  name: option,
+  description: `${option} related end-points`
+});
+var swaggerOptions = {
+  swagger: {
+    info: {
+      title: "RESTful API using Fastify - Food explorer",
+      description: "CRUDs using Swagger, Fastify and Prisma.",
+      version: "1.0.0"
+    },
+    host: "localhost",
+    schemes: ["http", "https"],
+    consumes: ["application/json"],
+    produces: ["application/json"],
+    tags: [
+      tagsOptions("Users"),
+      tagsOptions("Dishes"),
+      tagsOptions("Categories")
+    ]
+  }
+};
+var swaggerUiOptions = {
+  routePrefix: "/docs",
+  exposeRoute: true
+};
+
+// src/utils/errors/fastify-under-pressure.ts
+var FastifyUnderPressureError = class _FastifyUnderPressureError extends Error {
+  constructor() {
+    super("Under pressure!");
+    Error.captureStackTrace(
+      this,
+      _FastifyUnderPressureError
+    );
+  }
+};
+
+// src/config/fastifyUnderPressure.config.ts
+var fastifyUnderPressureOptions = {
+  maxEventLoopDelay: 1e3,
+  maxHeapUsedBytes: 1e8,
+  maxRssBytes: 1e8,
+  maxEventLoopUtilization: 0.98,
+  customError: FastifyUnderPressureError,
+  retryAfter: 50
+};
+
 // src/app.ts
-var import_http_status9 = __toESM(require("http-status"));
-var app = (0, import_fastify.default)();
+var app = (0, import_fastify.default)(
+  /* { logger: true } */
+);
 app.register(import_jwt.default, {
   secret: env.JWT_SECRET,
   cookie: {
@@ -565,6 +812,20 @@ app.register(import_jwt.default, {
     expiresIn: "10m"
   }
 });
+app.register(import_under_pressure.default, fastifyUnderPressureOptions);
+app.register(import_helmet.default, {
+  global: true,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "validator.swagger.io"],
+      scriptSrc: ["'self'", "https:", "unpkg.com"]
+    }
+  }
+});
+app.register(import_swagger.default, swaggerOptions);
+app.register(import_swagger_ui.default, swaggerUiOptions);
 app.register(import_cookie.default);
 app.register(usersRoutes);
 app.register(dishesRoutes);

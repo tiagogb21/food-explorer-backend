@@ -33,5 +33,5 @@ export async function createDish(request: FastifyRequest, reply: FastifyReply) {
         throw error;
     }
 
-    return reply.status(httpStatus.OK).send();
+    return reply.status(httpStatus.CREATED).send();
 }
