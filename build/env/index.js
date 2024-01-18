@@ -28,6 +28,9 @@ var import_zod = require("zod");
 var envSchema = import_zod.z.object({
   NODE_ENV: import_zod.z.enum(["dev", "test", "production"]).default("dev"),
   JWT_SECRET: import_zod.z.string(),
+  DB_DATABASE: import_zod.z.string(),
+  DB_USERNAME: import_zod.z.string(),
+  DB_PASSWORD: import_zod.z.string(),
   PORT: import_zod.z.coerce.number().default(3333)
 });
 var _env = envSchema.safeParse(process.env);

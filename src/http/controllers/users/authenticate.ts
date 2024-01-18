@@ -2,7 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import httpStatus from 'http-status';
 
 import { InvalidCredentialsError } from '@/use-cases/errors/invalid-credentials-error';
-import { makeAuthenticateUseCase } from '@/use-cases/factories/make-authenticate-use-case';
+import { makeAuthenticateUseCase } from '@/use-cases/factories/users/make-authenticate-use-case';
 import { authenticateBodySchema } from '@/validate/authenticateBodySchema';
 
 export async function authenticate(

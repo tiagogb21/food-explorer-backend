@@ -51,6 +51,9 @@ var import_zod = require("zod");
 var envSchema = import_zod.z.object({
   NODE_ENV: import_zod.z.enum(["dev", "test", "production"]).default("dev"),
   JWT_SECRET: import_zod.z.string(),
+  DB_DATABASE: import_zod.z.string(),
+  DB_USERNAME: import_zod.z.string(),
+  DB_PASSWORD: import_zod.z.string(),
   PORT: import_zod.z.coerce.number().default(3333)
 });
 var _env = envSchema.safeParse(process.env);
@@ -99,11 +102,7 @@ var PrismaUsersRepository = class {
     return user;
   }
   async delete(data) {
-    await prisma.user.delete({
-      where: {
-        id: data.where.id
-      }
-    });
+    await prisma.user.delete(data);
   }
 };
 
@@ -134,7 +133,7 @@ var AuthenticateUseCase = class {
   }
 };
 
-// src/use-cases/factories/make-authenticate-use-case.ts
+// src/use-cases/factories/users/make-authenticate-use-case.ts
 function makeAuthenticateUseCase() {
   const usersRepository = new PrismaUsersRepository();
   const authenticateUseCase = new AuthenticateUseCase(usersRepository);

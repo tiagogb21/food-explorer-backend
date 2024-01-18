@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import httpStatus from 'http-status';
 
-import { makeGetUserProfileUseCase } from '@/use-cases/factories/make-get-user-profile-use.case';
+import { makeGetUserProfileUseCase } from '@/use-cases/factories/users/make-get-user-profile-use.case';
 
 export async function profile(request: FastifyRequest, reply: FastifyReply) {
     const getUserProfile = makeGetUserProfileUseCase();
